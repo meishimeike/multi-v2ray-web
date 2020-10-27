@@ -22,12 +22,12 @@ function get_server_ip() {
 
 function Get_Code($date,$get)
 {
-	$newdata=array();
 	$serverlist=array();	
 	$arr = json_decode($date,true);
 	$list=$arr["inbounds"];
 	foreach($list as $l)
 	{
+		$newdata=array();
 		switch ($l["protocol"])
 		{
 			case "vmess":
