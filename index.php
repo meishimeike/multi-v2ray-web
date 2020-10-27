@@ -1,101 +1,113 @@
 <?php
 header("Content-Type: text/html;charset=utf-8");
-$file_path = "/etc/v2ray/config.json";
-if(!isset($_GET["get"]) || !file_exists($file_path))
-	exit("参数错误或配置文件不存在！");
-	
-$get=$_GET["get"];
-$newdata=array();
-$serverlist=array();
-$data = file_get_contents($file_path);
-$arr = json_decode($data,true);
-$list=$arr["inbounds"];
+$config_path = "/etc/v2ray/config.json";
 
-foreach($list as $l)
-{
-	if($l["protocol"]=="vmess")
-	{
-		$v="2";
-		$domain=$l["domain"];
-		if($domain!=""){
-			$add=$domain;
-		}else{
-			$add=getenv('SERVER_ADDR');
-		}
-		$port=$l["port"];
-		$id=$l["settings"]["clients"][0]["id"];
-		$aid=$l["settings"]["clients"][0]["alterId"];
-		$net=$l["streamSettings"]["network"];
-		if($net=="tcp"){
-			$netset="tcpSettings";
-		}
-		if($net=="ws"){
-			$netset="wsSettings";
-		}
-		if($net=="kcp"){
-			$netset="kcpSettings";
-		}
-		if($net=="h2"){
-			$netset="httpSettings";
-		}
-		if($net=="quic"){
-			$netset="quicSettings";
-		}
-		$type=$l["streamSettings"][$netset]["headers"]["type"];
-		$host=$l["streamSettings"][$netset]["headers"]["Host"];
-		$path=$l["streamSettings"][$netset]["path"];
-		$tls=$l["streamSettings"]["security"];
-		
-		if($type!="")
-		{
-		    $ps=$add."-".$net."-".$type."-".$port;
-		}else{
-			$ps=$add."-".$net."-".$port;
-		}
-		
-		if($v!="" && $ps!="" && $port!="" && $id!="" && $aid!="")
-		{
-		    $newdata['v']=$v;
-		    $newdata['ps']=$ps;
-		    $newdata['add']=$add;
-		    $newdata['port']=$port;
-		    $newdata['id']=$id;
-		    $newdata['aid']=$aid;
-		}
-		else
-		{
-		    exit;
-		}
-		if($net!=""){
-		    $newdata['net']=$net;
-		}
-		if($type!="")
-		{
-		    $newdata['type']=$type;
-		}
-		if($host!="")
-		{
-		    $newdata['host']=$host;
-		}
-		if($path!="")
-		{   
-		    $newdata['path']=$path;
-		}
-		if($tls!="")
-		{
-		    $newdata['tls']=$tls;
-		}
-		$json_string = json_encode($newdata);
-		$serverlist[]='vmess://'.base64_encode($json_string);
-	}
+if(!isset($_GET["get"]) || !file_exists($config_path))
+	exit("参数错误或配置文件不存在！");
+else
+	echo Get_Code(file_get_contents($config_path),$_GET["get"]);
+
+function get_server_ip() {
+    if (isset($_SERVER)) {
+        if($_SERVER['SERVER_ADDR']) {
+            $server_ip = $_SERVER['SERVER_ADDR'];
+        } else {
+            $server_ip = $_SERVER['LOCAL_ADDR'];
+        }
+    } else {
+        $server_ip = getenv('SERVER_ADDR');
+    }
+    return $server_ip;
 }
-if($get==0){
-	$serverall;
-	foreach($serverlist as $ser){
-		$serverall=$serverall.$ser."\r\n";
+
+function Get_Code($date,$get)
+{
+	$newdata=array();
+	$serverlist=array();	
+	$arr = json_decode($date,true);
+	$list=$arr["inbounds"];
+	foreach($list as $l)
+	{
+		switch ($l["protocol"])
+		{
+			case "vmess":
+				$v="2";
+				if(isset($l["domain"])){
+					$add=$l["domain"];
+				}else{
+					$add=get_server_ip();
+				}
+				$port=$l["port"];
+				$id=$l["settings"]["clients"][0]["id"];
+				$aid=$l["settings"]["clients"][0]["alterId"];
+				$net=$l["streamSettings"]["network"];
+				switch ($net)
+				{
+					case "tcp":			
+						$tls=$l["streamSettings"]["security"];
+						$type=$l["streamSettings"]["tcpSettings"]["header"]["type"];
+						$host=$l["streamSettings"]["tcpSettings"]["header"]["request"]["headers"]["Host"];
+						$path=$l["streamSettings"]["tcpSettings"]["header"]["request"]["path"][0];
+						break;  
+					case "ws":
+						$tls=$l["streamSettings"]["security"];
+						$type=$l["streamSettings"]["wsSettings"]["headers"]["type"];
+						$host=$l["streamSettings"]["wsSettings"]["headers"]["Host"];
+						$path=$l["streamSettings"]["wsSettings"]["path"];
+						break;
+					case "h2":
+						$tls=$l["streamSettings"]["security"];
+						$type=$l["streamSettings"]["httpSettings"]["headers"]["type"];
+						$host=$l["streamSettings"]["httpSettings"]["headers"]["Host"];
+						$path=$l["streamSettings"]["httpSettings"]["path"];
+						break;
+					case "kcp":
+						$tls=$l["streamSettings"]["security"];
+						$type=$l["streamSettings"]["kcpSettings"]["header"]["type"];
+						$host=$l["streamSettings"]["kcpSettings"]["security"];
+						$path=$l["streamSettings"]["kcpSettings"]["key"];
+						break;
+					case "quic":
+						$tls=$l["streamSettings"]["security"];
+						$type=$l["streamSettings"]["quicSettings"]["header"]["type"];
+						$host=$l["streamSettings"]["quicSettings"]["security"];
+						$path=$l["streamSettings"]["quicSettings"]["key"];
+						break;
+					default:
+				}
+			
+				$ps=$add."-".$net."-".$type."-".$port;
+				$newdata['v']=$v;
+				$newdata['ps']=$ps;
+				$newdata['add']=$add;
+				$newdata['port']=$port;
+				$newdata['id']=$id;
+				$newdata['aid']=$aid;
+				$newdata['net']=$net;
+				$newdata['tls']=$tls;
+				if(isset($type)&&$type!="")
+					$newdata['type']=$type;
+				if(isset($host)&&$host!="")
+					$newdata['host']=$host;
+				if(isset($path)&&$path!="")
+					$newdata['path']=$path;				
+				$json_string = json_encode($newdata);
+				$serverlist[]='vmess://'.base64_encode($json_string);
+				//print_r($newdata)."\r\n";
+				break;
+			case "socks5":
+				break;
+			default:
+		}
 	}
-	echo(base64_encode($serverall));
-}else{
-	echo(base64_encode($serverlist[$get-1]));
+	if($get==0){
+		$serverall;
+		foreach($serverlist as $ser){
+			$serverall=$serverall.$ser."\r\n";
+		}
+		return base64_encode($serverall);
+	}else{
+		return base64_encode($serverlist[$get-1]);
+	}
 }
 ?>
