@@ -99,7 +99,7 @@ function Get_Code($date,$get)
 				break;
 			case "trojan":
 			    	$passwd=$l["settings"]["clients"][0]["password"];
-			    	$serverlist[]='trojan://'.$passwd.'@'.$add.":".$port;
+			    	$serverlist[]='trojan://'.$passwd.'@'.$add.":".$port.'#'.$add.'-'.$port;
 				break;
 			default:
 		}
