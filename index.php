@@ -22,22 +22,24 @@ function get_server_ip() {
 
 function Get_Code($date,$get)
 {
+	//$newdata=array();
 	$serverlist=array();	
 	$arr = json_decode($date,true);
 	$list=$arr["inbounds"];
 	foreach($list as $l)
 	{
-		$newdata=array();
+	    $newdata=array();
+	    if(isset($l["domain"])){
+			$add=$l["domain"];
+		}else{
+			$add=get_server_ip();
+		}
+		$port=$l["port"];
+		
 		switch ($l["protocol"])
 		{
 			case "vmess":
 				$v="2";
-				if(isset($l["domain"])){
-					$add=$l["domain"];
-				}else{
-					$add=get_server_ip();
-				}
-				$port=$l["port"];
 				$id=$l["settings"]["clients"][0]["id"];
 				$aid=$l["settings"]["clients"][0]["alterId"];
 				$net=$l["streamSettings"]["network"];
@@ -46,8 +48,8 @@ function Get_Code($date,$get)
 					case "tcp":			
 						$tls=$l["streamSettings"]["security"];
 						$type=$l["streamSettings"]["tcpSettings"]["header"]["type"];
-						$host=$l["streamSettings"]["tcpSettings"]["header"]["request"]["headers"]["Host"];
-						$path=$l["streamSettings"]["tcpSettings"]["header"]["request"]["path"][0];
+						//$host=$l["streamSettings"]["tcpSettings"]["header"]["request"]["headers"]["Host"];
+						//$path=$l["streamSettings"]["tcpSettings"]["header"]["request"]["path"][0];
 						break;  
 					case "ws":
 						$tls=$l["streamSettings"]["security"];
@@ -95,7 +97,9 @@ function Get_Code($date,$get)
 				$serverlist[]='vmess://'.base64_encode($json_string);
 				//print_r($newdata)."\r\n";
 				break;
-			case "socks5":
+			case "trojan":
+			    	$passwd=$l["settings"]["clients"][0]["password"];
+			    	$serverlist[]='trojan://'.$passwd.'@'.$add.":".$port;
 				break;
 			default:
 		}
