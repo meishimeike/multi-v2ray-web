@@ -98,9 +98,27 @@ function Get_Code($date,$get)
 				//print_r($newdata)."\r\n";
 				break;
 			case "trojan":
-			    	$passwd=$l["settings"]["clients"][0]["password"];
-			    	$serverlist[]='trojan://'.$passwd.'@'.$add.":".$port.'#'.$add.'-'.$port;
+			    $passwd=$l["settings"]["clients"][0]["password"];
+			    $serverlist[]='trojan://'.$passwd.'@'.$add.":".$port.'#trojan-'.$add.'-'.$port;
 				break;
+			case "shadowsocks":
+			    $passwd=$l["settings"]["password"];
+			    $method=$l["settings"]["method"];
+			    $serverlist[]='ss://'.base64_encode($method.':'.$passwd.'@'.$add.':'.$port.'#ss-'.$add.'-'.$port);
+			    break;
+			case "socks":
+			    if(isset($l["settings"]["auth"]) && $l["settings"]["auth"]=="password"){
+			        $user=$l["settings"]["accounts"][0]["user"];
+			        $pass=$l["settings"]["accounts"][0]["pass"];
+			        $serverlist[]='tg://socks?server='.$add.'&'.'port='.$port.'&user='.$user.'&pass='.$pass.'#socks5-'.$add.'-'.$port;
+			    }else{
+			        $serverlist[]='tg://socks?server='.$add.'&'.'port='.$port.'#'.$add.'-'.$port;
+			    }
+			    break;
+			case "mtproto":
+			    $secret=$l["settings"]["users"][0]["secret"];
+			    $serverlist[]='tg://socks?server='.$add.'&'.'port='.$port.'&secret='.$secret.'#mtproto-'.$add.'-'.$port;
+			    break;
 			default:
 		}
 	}
