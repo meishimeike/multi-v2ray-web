@@ -10,8 +10,8 @@ else
 function get_server_ip() {
     $sock = socket_create(AF_INET, SOCK_DGRAM, SOL_UDP);
     socket_connect($sock,"8.8.8.8", 53);
-    socket_getsockname($sock, $name); // $name passed by reference
-    return $name;
+    socket_getsockname($sock, $address);
+    return $address;
 }
 
 function Get_Code($date,$get)
