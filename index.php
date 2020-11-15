@@ -8,16 +8,10 @@ else
 	echo Get_Code(file_get_contents($config_path),$_GET["get"]);
 
 function get_server_ip() {
-    if (isset($_SERVER)) {
-        if($_SERVER['SERVER_ADDR']) {
-            $server_ip = $_SERVER['SERVER_ADDR'];
-        } else {
-            $server_ip = $_SERVER['LOCAL_ADDR'];
-        }
-    } else {
-        $server_ip = getenv('SERVER_ADDR');
-    }
-    return $server_ip;
+    $sock = socket_create(AF_INET, SOCK_DGRAM, SOL_UDP);
+    socket_connect($sock,"8.8.8.8", 53);
+    socket_getsockname($sock, $name); // $name passed by reference
+    return $name;
 }
 
 function Get_Code($date,$get)
